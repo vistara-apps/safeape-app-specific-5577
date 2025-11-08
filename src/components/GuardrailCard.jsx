@@ -1,157 +1,242 @@
 import React, { useState } from 'react';
-import { Shield, Settings, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, AlertTriangle, Settings, Play, Pause } from 'lucide-react';
+import { usePaymentContext } from '../hooks/usePaymentContext';
 
-const GuardrailCard = ({ userSettings, onUpdateLimits }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempLimits, setTempLimits] = useState({
-    dailyLossLimit: userSettings.dailyLossLimit,
-    weeklyLossLimit: userSettings.weeklyLossLimit,
-  });
+const GuardrailCard = () => {
+  const [dailyLimit, setDailyLimit] = useState(0.5);
+  const [weeklyLimit, setWeeklyLimit] = useState(2.0);
+  const [isActive, setIsActive] = useState(true);
+  const [currentDailyLoss, setCurrentDailyLoss] = useState(0.23);
+  const [currentWeeklyLoss, setCurrentWeeklyLoss] = useState(0.67);
+  const [paid, setPaid] = useState(false);
 
-  const dailyUsagePercent = (userSettings.currentDailyLoss / userSettings.dailyLossLimit) * 100;
-  const weeklyUsagePercent = (userSettings.currentWeeklyLoss / userSettings.weeklyLossLimit) * 100;
+  const { createSession } = usePaymentContext();
 
-  const handleSave = () => {
-    onUpdateLimits(tempLimits);
-    setIsEditing(false);
+  const dailyProgress = (currentDailyLoss / dailyLimit) * 100;
+  const weeklyProgress = (currentWeeklyLoss / weeklyLimit) * 100;
+
+  const handleActivateGuardrails = async () => {
+    if (!paid) {
+      try {
+        await createSession();
+        setPaid(true);
+        setIsActive(true);
+      } catch (error) {
+        console.error('Payment failed:', error);
+      }
+    } else {
+      setIsActive(!isActive);
+    }
   };
 
-  const getStatusColor = (percent) => {
-    if (percent >= 90) return 'danger';
-    if (percent >= 70) return 'warning';
-    return 'primary';
+  const getProgressColor = (progress) => {
+    if (progress < 50) return 'bg-success';
+    if (progress < 80) return 'bg-warning';
+    return 'bg-danger';
   };
 
-  const getStatusIcon = () => {
-    if (userSettings.isPaused) return AlertTriangle;
-    if (dailyUsagePercent >= 90 || weeklyUsagePercent >= 90) return AlertTriangle;
-    return CheckCircle;
+  const getStatusConfig = () => {
+    if (!isActive) {
+      return {
+        icon: Shield,
+        color: 'text-textSecondary',
+        bg: 'bg-surface',
+        status: 'Inactive',
+        description: 'Guardrails are disabled'
+      };
+    }
+    
+    if (dailyProgress >= 100 || weeklyProgress >= 100) {
+      return {
+        icon: AlertTriangle,
+        color: 'text-danger',
+        bg: 'bg-danger/10',
+        status: 'Triggered',
+        description: 'Trading paused - limits exceeded'
+      };
+    }
+    
+    if (dailyProgress >= 80 || weeklyProgress >= 80) {
+      return {
+        icon: AlertTriangle,
+        color: 'text-warning',
+        bg: 'bg-warning/10',
+        status: 'Warning',
+        description: 'Approaching loss limits'
+      };
+    }
+    
+    return {
+      icon: Shield,
+      color: 'text-success',
+      bg: 'bg-success/10',
+      status: 'Active',
+      description: 'Protecting your wallet'
+    };
   };
 
-  const StatusIcon = getStatusIcon();
+  const statusConfig = getStatusConfig();
+  const StatusIcon = statusConfig.icon;
+
+  if (!paid) {
+    return (
+      <div className="space-y-6">
+        <div className="card-elevated text-center">
+          <div className="mb-6">
+            <div className="bg-primary p-4 rounded-full w-16 h-16 mx-auto mb-4">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-textPrimary mb-2">SafeGuard Protection</h2>
+            <p className="text-textSecondary">
+              Activate AI-powered loss protection to trade with confidence
+            </p>
+          </div>
+          
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+              <span className="text-textSecondary">Auto-pause on loss limits</span>
+              <span className="text-primary">✓</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+              <span className="text-textSecondary">Real-time monitoring</span>
+              <span className="text-primary">✓</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+              <span className="text-textSecondary">Instant notifications</span>
+              <span className="text-primary">✓</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleActivateGuardrails}
+            className="w-full btn-primary py-3 text-lg font-semibold"
+          >
+            Activate SafeGuard - $2/month
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="card-elevated p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-            userSettings.isPaused ? 'bg-danger/20 text-danger' : 'bg-primary/20 text-primary'
-          }`}>
-            <Shield className="w-6 h-6" />
+    <div className="space-y-6">
+      {/* Status Card */}
+      <div className={`card-elevated ${statusConfig.bg}`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <StatusIcon className={`w-6 h-6 ${statusConfig.color}`} />
+            <div>
+              <h2 className="text-lg font-semibold text-textPrimary">SafeGuard Status</h2>
+              <p className={`text-sm ${statusConfig.color}`}>{statusConfig.status}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-h2">Loss Guardrails</h3>
-            <p className="text-caption">Auto-pause protection active</p>
-          </div>
+          <button
+            onClick={() => setIsActive(!isActive)}
+            className={`p-2 rounded-md transition-colors ${
+              isActive ? 'bg-success text-white' : 'bg-surface text-textSecondary'
+            }`}
+          >
+            {isActive ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+          </button>
         </div>
-        
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className="btn-secondary p-2"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
+        <p className="text-textSecondary">{statusConfig.description}</p>
       </div>
 
-      {isEditing ? (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Daily Loss Limit (SOL)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={tempLimits.dailyLossLimit}
-              onChange={(e) => setTempLimits(prev => ({ ...prev, dailyLossLimit: parseFloat(e.target.value) }))}
-              className="w-full bg-surface border border-border rounded-md px-3 py-2 text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Weekly Loss Limit (SOL)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={tempLimits.weeklyLossLimit}
-              onChange={(e) => setTempLimits(prev => ({ ...prev, weeklyLossLimit: parseFloat(e.target.value) }))}
-              className="w-full bg-surface border border-border rounded-md px-3 py-2 text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          
-          <div className="flex space-x-2">
-            <button onClick={handleSave} className="btn-primary flex-1">
-              Save Changes
-            </button>
-            <button onClick={() => setIsEditing(false)} className="btn-secondary flex-1">
-              Cancel
-            </button>
-          </div>
+      {/* Loss Limits Configuration */}
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-textPrimary">Loss Limits</h3>
+          <Settings className="w-5 h-5 text-textSecondary" />
         </div>
-      ) : (
+
         <div className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Daily Usage</span>
-                <span className="text-mono text-sm">
-                  {userSettings.currentDailyLoss.toFixed(2)} / {userSettings.dailyLossLimit.toFixed(2)} SOL
-                </span>
-              </div>
-              <div className="w-full bg-surface rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    getStatusColor(dailyUsagePercent) === 'danger' ? 'bg-danger' :
-                    getStatusColor(dailyUsagePercent) === 'warning' ? 'bg-warning' :
-                    'bg-primary'
-                  }`}
-                  style={{ width: `${Math.min(dailyUsagePercent, 100)}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-textSecondary mt-1">
-                {dailyUsagePercent.toFixed(1)}% of daily limit used
-              </p>
+          {/* Daily Limit */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-textPrimary">Daily Limit</label>
+              <span className="text-sm text-textSecondary">{dailyLimit} SOL</span>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Weekly Usage</span>
-                <span className="text-mono text-sm">
-                  {userSettings.currentWeeklyLoss.toFixed(2)} / {userSettings.weeklyLossLimit.toFixed(2)} SOL
-                </span>
+            <input
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value={dailyLimit}
+              onChange={(e) => setDailyLimit(parseFloat(e.target.value))}
+              className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs text-textSecondary mb-1">
+                <span>Used: {currentDailyLoss} SOL</span>
+                <span>{dailyProgress.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-surface rounded-full h-2">
                 <div
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    getStatusColor(weeklyUsagePercent) === 'danger' ? 'bg-danger' :
-                    getStatusColor(weeklyUsagePercent) === 'warning' ? 'bg-warning' :
-                    'bg-primary'
-                  }`}
-                  style={{ width: `${Math.min(weeklyUsagePercent, 100)}%` }}
-                ></div>
+                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(dailyProgress)}`}
+                  style={{ width: `${Math.min(dailyProgress, 100)}%` }}
+                />
               </div>
-              <p className="text-xs text-textSecondary mt-1">
-                {weeklyUsagePercent.toFixed(1)}% of weekly limit used
-              </p>
             </div>
           </div>
 
-          <div className={`flex items-center space-x-2 p-3 rounded-lg ${
-            userSettings.isPaused ? 'bg-danger/10 border border-danger/20' :
-            dailyUsagePercent >= 90 || weeklyUsagePercent >= 90 ? 'bg-warning/10 border border-warning/20' :
-            'bg-primary/10 border border-primary/20'
-          }`}>
-            <StatusIcon className={`w-5 h-5 ${
-              userSettings.isPaused ? 'text-danger' :
-              dailyUsagePercent >= 90 || weeklyUsagePercent >= 90 ? 'text-warning' :
-              'text-primary'
-            }`} />
-            <span className="text-sm font-medium">
-              {userSettings.isPaused ? 'Trading Paused - Limits Exceeded' :
-               dailyUsagePercent >= 90 || weeklyUsagePercent >= 90 ? 'Approaching Loss Limit' :
-               'Protection Active'}
-            </span>
+          {/* Weekly Limit */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-textPrimary">Weekly Limit</label>
+              <span className="text-sm text-textSecondary">{weeklyLimit} SOL</span>
+            </div>
+            <input
+              type="range"
+              min="0.5"
+              max="20"
+              step="0.5"
+              value={weeklyLimit}
+              onChange={(e) => setWeeklyLimit(parseFloat(e.target.value))}
+              className="w-full h-2 bg-surface rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs text-textSecondary mb-1">
+                <span>Used: {currentWeeklyLoss} SOL</span>
+                <span>{weeklyProgress.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-surface rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(weeklyProgress)}`}
+                  style={{ width: `${Math.min(weeklyProgress, 100)}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="card-elevated">
+        <h3 className="text-lg font-semibold text-textPrimary mb-4">Recent Activity</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-success rounded-full"></div>
+              <span className="text-sm text-textPrimary">Position auto-closed: WIF</span>
+            </div>
+            <span className="text-xs text-textSecondary">2 min ago</span>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-warning rounded-full"></div>
+              <span className="text-sm text-textPrimary">Warning: 80% daily limit</span>
+            </div>
+            <span className="text-xs text-textSecondary">15 min ago</span>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-surface rounded-md">
+            <div className="flex items-center space-x-3">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span className="text-sm text-textPrimary">SafeGuard activated</span>
+            </div>
+            <span className="text-xs text-textSecondary">1 hour ago</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

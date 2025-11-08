@@ -1,104 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import GuardrailCard from './components/GuardrailCard';
 import SentimentPulse from './components/SentimentPulse';
-import SocialTradingFeed from './components/SocialTradingFeed';
+import SocialTrading from './components/SocialTrading';
 import BacktestLab from './components/BacktestLab';
-import { usePaymentContext } from './hooks/usePaymentContext';
+import { Shield, TrendingUp, Users, BarChart3 } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [userSettings, setUserSettings] = useState({
-    dailyLossLimit: 0.5,
-    weeklyLossLimit: 2.0,
-    currentDailyLoss: 0.12,
-    currentWeeklyLoss: 0.45,
-    isPaused: false,
-    rugPullFilter: true,
-  });
 
-  const [sentimentData, setSentimentData] = useState([
-    { symbol: 'BONK', score: 82, mentions: 340, change: '+15%', price: '$0.000012' },
-    { symbol: 'WIF', score: 76, mentions: 180, change: '+8%', price: '$2.34' },
-    { symbol: 'PEPE', score: 68, mentions: 220, change: '-3%', price: '$0.0000089' },
-    { symbol: 'SHIB', score: 45, mentions: 95, change: '-12%', price: '$0.0000078' },
-  ]);
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+    { id: 'guardrails', label: 'SafeGuard', icon: Shield },
+    { id: 'sentiment', label: 'Signals', icon: BarChart3 },
+    { id: 'social', label: 'Social', icon: Users },
+  ];
 
-  const { createSession } = usePaymentContext();
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSentimentData(prev => prev.map(token => ({
-        ...token,
-        score: Math.max(0, Math.min(100, token.score + (Math.random() - 0.5) * 10)),
-        mentions: Math.max(0, token.mentions + Math.floor((Math.random() - 0.5) * 50)),
-      })));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleLossLimitUpdate = (newLimits) => {
-    setUserSettings(prev => ({ ...prev, ...newLimits }));
-  };
-
-  const handleTrade = async (token, amount, type) => {
-    try {
-      await createSession();
-      // Simulate trade execution
-      const tradeAmount = type === 'buy' ? amount : -amount;
-      setUserSettings(prev => ({
-        ...prev,
-        currentDailyLoss: Math.max(0, prev.currentDailyLoss + (tradeAmount < 0 ? Math.abs(tradeAmount) : 0)),
-        currentWeeklyLoss: Math.max(0, prev.currentWeeklyLoss + (tradeAmount < 0 ? Math.abs(tradeAmount) : 0)),
-      }));
-    } catch (error) {
-      console.error('Trade failed:', error);
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'guardrails':
+        return <GuardrailCard />;
+      case 'sentiment':
+        return <SentimentPulse />;
+      case 'social':
+        return <SocialTrading />;
+      default:
+        return <Dashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-bg text-textPrimary">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Header />
       
-      <main className="max-w-6xl mx-auto px-4 md:px-6 py-6">
-        {activeTab === 'dashboard' && (
-          <div className="space-y-6">
-            <Dashboard userSettings={userSettings} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GuardrailCard 
-                userSettings={userSettings}
-                onUpdateLimits={handleLossLimitUpdate}
-              />
-              
-              <div className="space-y-4">
-                <h2 className="text-h2">Sentiment Alerts</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {sentimentData.slice(0, 4).map((token) => (
-                    <SentimentPulse
-                      key={token.symbol}
-                      token={token}
-                      onTrade={handleTrade}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+      {/* Mobile-first navigation */}
+      <nav className="sticky top-0 z-40 bg-surface border-b border-border">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex space-x-1 overflow-x-auto py-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md whitespace-nowrap transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-primary text-white'
+                      : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceElevated'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
+      </nav>
 
-        {activeTab === 'social' && (
-          <SocialTradingFeed onCopyTrade={handleTrade} />
-        )}
-
-        {activeTab === 'backtest' && (
-          <BacktestLab />
-        )}
+      {/* Main content */}
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        {renderContent()}
       </main>
+
+      {/* Floating action button for quick trade */}
+      <button className="fixed bottom-6 right-6 bg-primary hover:bg-primaryHover text-white p-4 rounded-full shadow-glow transition-all duration-200 z-50">
+        <TrendingUp className="w-6 h-6" />
+      </button>
     </div>
   );
 }

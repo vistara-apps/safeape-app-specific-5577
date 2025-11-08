@@ -15,14 +15,6 @@
 }
 
 @layer components {
-  .card {
-    @apply bg-surface border border-border rounded-lg shadow-card;
-  }
-  
-  .card-elevated {
-    @apply bg-surfaceElevated border border-border rounded-lg shadow-elevated;
-  }
-  
   .btn-primary {
     @apply bg-primary hover:bg-primaryHover text-white font-medium px-4 py-2 rounded-md transition-colors duration-200;
   }
@@ -31,31 +23,11 @@
     @apply bg-surface hover:bg-surfaceElevated text-textPrimary border border-border font-medium px-4 py-2 rounded-md transition-colors duration-200;
   }
   
-  .btn-danger {
-    @apply bg-danger hover:bg-red-600 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200;
+  .card {
+    @apply bg-surface border border-border rounded-lg p-4 shadow-card;
   }
   
-  .text-display {
-    @apply font-bold text-3xl md:text-5xl leading-tight tracking-tight;
-  }
-  
-  .text-h1 {
-    @apply font-semibold text-2xl md:text-4xl leading-snug;
-  }
-  
-  .text-h2 {
-    @apply font-semibold text-xl md:text-2xl;
-  }
-  
-  .text-body {
-    @apply font-normal text-base leading-7;
-  }
-  
-  .text-caption {
-    @apply font-medium text-sm leading-5 text-textSecondary;
-  }
-  
-  .text-mono {
-    @apply font-mono text-sm;
+  .card-elevated {
+    @apply bg-surfaceElevated border border-border rounded-lg p-4 shadow-elevated;
   }
 }

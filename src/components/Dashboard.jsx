@@ -1,95 +1,152 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Shield, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Shield, AlertTriangle, DollarSign } from 'lucide-react';
+import TradingChart from './TradingChart';
+import PositionCard from './PositionCard';
 
-const Dashboard = ({ userSettings }) => {
+const Dashboard = () => {
   const stats = [
     {
-      label: 'Total Protected',
-      value: '12.8 SOL',
-      change: '+2.3 SOL',
+      label: 'Total PnL',
+      value: '+1.23 SOL',
+      change: '+12.5%',
       trend: 'up',
-      icon: Shield,
+      icon: DollarSign,
     },
     {
       label: 'Win Rate',
       value: '68%',
-      change: '+5%',
+      change: '+5.2%',
       trend: 'up',
       icon: TrendingUp,
     },
     {
-      label: 'Active Positions',
-      value: '3',
-      change: '+1',
-      trend: 'up',
-      icon: TrendingUp,
+      label: 'Protected',
+      value: '15.7 SOL',
+      change: 'Active',
+      trend: 'neutral',
+      icon: Shield,
     },
     {
-      label: 'Scams Blocked',
+      label: 'Alerts Today',
       value: '7',
-      change: '+2',
+      change: '3 acted on',
       trend: 'neutral',
       icon: AlertTriangle,
     },
   ];
 
+  const positions = [
+    {
+      symbol: 'BONK',
+      name: 'Bonk',
+      price: 0.000012,
+      change: 15.7,
+      position: 0.5,
+      pnl: 0.078,
+      risk: 'low',
+    },
+    {
+      symbol: 'WIF',
+      name: 'dogwifhat',
+      price: 2.34,
+      change: -8.2,
+      position: 0.3,
+      pnl: -0.025,
+      risk: 'medium',
+    },
+    {
+      symbol: 'PEPE',
+      name: 'Pepe',
+      price: 0.0000089,
+      change: 23.1,
+      position: 0.8,
+      pnl: 0.184,
+      risk: 'low',
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-h1">Trading Dashboard</h1>
-          <p className="text-caption mt-1">
-            AI guards your wallet while you sleep
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${userSettings.isPaused ? 'bg-danger' : 'bg-primary'} animate-pulse`}></div>
-          <span className="text-sm font-medium">
-            {userSettings.isPaused ? 'Trading Paused' : 'SafeGuard Active'}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => {
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="card p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    stat.trend === 'up' ? 'bg-primary/20 text-primary' :
-                    stat.trend === 'down' ? 'bg-danger/20 text-danger' :
-                    'bg-accent/20 text-accent'
-                  }`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-caption">{stat.label}</p>
-                    <p className="text-h2 font-bold">{stat.value}</p>
-                  </div>
-                </div>
+            <div key={index} className="card">
+              <div className="flex items-center justify-between mb-2">
+                <Icon className="w-5 h-5 text-textSecondary" />
+                {stat.trend === 'up' && <TrendingUp className="w-4 h-4 text-success" />}
+                {stat.trend === 'down' && <TrendingDown className="w-4 h-4 text-danger" />}
               </div>
-              
-              <div className="mt-3 flex items-center space-x-1">
-                {stat.trend === 'up' ? (
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                ) : stat.trend === 'down' ? (
-                  <TrendingDown className="w-4 h-4 text-danger" />
-                ) : null}
-                <span className={`text-sm font-medium ${
-                  stat.trend === 'up' ? 'text-primary' :
-                  stat.trend === 'down' ? 'text-danger' :
-                  'text-textSecondary'
-                }`}>
-                  {stat.change}
-                </span>
-                <span className="text-textSecondary text-sm">this week</span>
+              <div className="text-2xl font-bold text-textPrimary mb-1">
+                {stat.value}
+              </div>
+              <div className={`text-sm ${
+                stat.trend === 'up' ? 'text-success' : 
+                stat.trend === 'down' ? 'text-danger' : 
+                'text-textSecondary'
+              }`}>
+                {stat.change}
+              </div>
+              <div className="text-xs text-textSecondary mt-1">
+                {stat.label}
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Trading Chart */}
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-textPrimary">Portfolio Performance</h2>
+          <div className="flex space-x-2">
+            <button className="text-xs px-3 py-1 bg-primary text-white rounded-md">24H</button>
+            <button className="text-xs px-3 py-1 text-textSecondary hover:text-textPrimary">7D</button>
+            <button className="text-xs px-3 py-1 text-textSecondary hover:text-textPrimary">30D</button>
+          </div>
+        </div>
+        <TradingChart />
+      </div>
+
+      {/* Active Positions */}
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-textPrimary">Active Positions</h2>
+          <button className="text-sm text-primary hover:text-primaryHover">View All</button>
+        </div>
+        <div className="space-y-3">
+          {positions.map((position, index) => (
+            <PositionCard key={index} position={position} />
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-4">
+        <button className="card hover:bg-surfaceElevated transition-colors duration-200 text-left">
+          <div className="flex items-center space-x-3">
+            <div className="bg-primary p-2 rounded-md">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="font-medium text-textPrimary">Quick Buy</div>
+              <div className="text-sm text-textSecondary">Trade trending tokens</div>
+            </div>
+          </div>
+        </button>
+        
+        <button className="card hover:bg-surfaceElevated transition-colors duration-200 text-left">
+          <div className="flex items-center space-x-3">
+            <div className="bg-warning p-2 rounded-md">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="font-medium text-textPrimary">Set Limits</div>
+              <div className="text-sm text-textSecondary">Configure guardrails</div>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
   );
