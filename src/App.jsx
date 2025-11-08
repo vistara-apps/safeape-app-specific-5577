@@ -4,7 +4,7 @@ import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import GuardrailCard from './components/GuardrailCard';
 import SentimentPulse from './components/SentimentPulse';
-import SocialTrading from './components/SocialTrading';
+import SocialTradingFeed from './components/SocialTradingFeed';
 import BacktestLab from './components/BacktestLab';
 import { Shield, TrendingUp, Users, BarChart3 } from 'lucide-react';
 
@@ -27,7 +27,7 @@ function App() {
       case 'sentiment':
         return <SentimentPulse />;
       case 'social':
-        return <SocialTrading />;
+        return <SocialTradingFeed />;
       default:
         return <Dashboard />;
     }
